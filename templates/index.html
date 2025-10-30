@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigMart Sales Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .prediction-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .feature-icon {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up me-2"></i>BigMart Sales
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold mb-3">BigMart Sales Prediction</h1>
+                    <p class="lead text-muted">Predict sales for your retail products</p>
+                </div>
+
+                <div class="prediction-card">
+                    <form id="predictionForm">
+                        <div class="row g-3">
+                            <!-- Item Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-4"><i class="bi bi-box-seam me-2"></i>Item Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="item_identifier" class="form-label">Item Identifier</label>
+                                    <input type="text" class="form-control" id="item_identifier" required 
+                                           placeholder="e.g., FDW58" value="FDW58">
+                                    <div class="form-text">Unique identifier for the item</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_type" class="form-label">Item Type</label>
+                                    <select class="form-select" id="item_type" required>
+                                        {% for type in item_types %}
+                                            <option value="{{ type }}">{{ type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_weight" class="form-label">Item Weight (g)</label>
+                                    <input type="number" step="0.01" class="form-control" id="item_weight" required value="12.5">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_fat_content" class="form-label">Fat Content</label>
+                                    <select class="form-select" id="item_fat_content" required>
+                                        <option value="Low Fat">Low Fat</option>
+                                        <option value="Regular">Regular</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_visibility" class="form-label">Item Visibility (0-1)</label>
+                                    <input type="number" step="0.0001" min="0" max="1" class="form-control" id="item_visibility" required value="0.05">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_mrp" class="form-label">Maximum Retail Price (MRP)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="item_mrp" required value="100.00">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Outlet Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-4"><i class="bi bi-shop me-2"></i>Outlet Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="outlet_identifier" class="form-label">Outlet Identifier</label>
+                                    <input type="number" class="form-control" id="outlet_identifier" min="0" max="100" required value="10">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_establishment_year" class="form-label">Establishment Year</label>
+                                    <input type="number" class="form-control" id="outlet_establishment_year" min="1985" max="2023" required value="2010">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_size" class="form-label">Outlet Size</label>
+                                    <select class="form-select" id="outlet_size" required>
+                                        {% for size in outlet_sizes %}
+                                            <option value="{{ size }}">{{ size }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_location_type" class="form-label">Location Type</label>
+                                    <select class="form-select" id="outlet_location_type" required>
+                                        {% for location in location_types %}
+                                            <option value="{{ location }}">{{ location }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_type" class="form-label">Outlet Type</label>
+                                    <select class="form-select" id="outlet_type" required>
+                                        {% for type in outlet_types %}
+                                            <option value="{{ type }}">{{ type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-graph-up me-2"></i>Predict Sales
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Enhanced Results Section -->
+                    <div class="result-box mt-4 p-4" id="resultBox" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">
+                                <i class="bi bi-graph-up me-2"></i>Sales Prediction Analysis
+                            </h4>
+                            <span class="badge bg-success" id="confidenceBadge">High Confidence</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-3 text-muted">Predicted Weekly Sales</h6>
+                                        <div class="d-flex align-items-baseline">
+                                            <span class="display-4 fw-bold text-primary me-2" id="predictionResult">$0.00</span>
+                                            <span class="text-success" id="confidenceText">
+                                                <i class="bi bi-arrow-up"></i> <span id="percentageDiff">0%</span> vs average
+                                            </span>
+                                        </div>
+                                        <div class="progress mt-3" style="height: 10px;">
+                                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                                 id="salesProgress" role="progressbar" style="width: 0%" 
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2 small text-muted">
+                                            <span>Low</span>
+                                            <span>Average</span>
+                                            <span>High</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-3 text-muted">Key Performance Indicators</h6>
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <div class="border rounded p-3 text-center">
+                                                    <div class="text-muted small mb-1">Item MRP Impact</div>
+                                                    <div class="h5 mb-0 text-primary fw-bold" id="mrpImpact">High</div>
+                                                    <div class="progress mt-2" style="height: 4px;">
+                                                        <div class="progress-bar bg-warning" style="width: 85%"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="border rounded p-3 text-center">
+                                                    <div class="text-muted small mb-1">Outlet Impact</div>
+                                                    <div class="h5 mb-0 text-primary fw-bold" id="outletImpact">Medium</div>
+                                                    <div class="progress mt-2" style="height: 4px;">
+                                                        <div class="progress-bar bg-info" style="width: 60%"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="border rounded p-3 text-center">
+                                                    <div class="text-muted small mb-1">Seasonality</div>
+                                                    <div class="h5 mb-0 text-primary fw-bold" id="seasonality">Normal</div>
+                                                    <div class="progress mt-2" style="height: 4px;">
+                                                        <div class="progress-bar bg-success" style="width: 40%"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="border rounded p-3 text-center">
+                                                    <div class="text-muted small mb-1">Market Trend</div>
+                                                    <div class="h5 mb-0 text-primary fw-bold" id="marketTrend">Stable</div>
+                                                    <div class="progress mt-2" style="height: 4px;">
+                                                        <div class="progress-bar bg-primary" style="width: 50%"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-3 text-muted">Recommendations</h6>
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item d-flex align-items-center">
+                                                <div class="me-3 text-warning">
+                                                    <i class="bi bi-lightbulb-fill"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">Inventory Suggestion</div>
+                                                    <small class="text-muted" id="inventorySuggestion">Maintain current stock levels</small>
+                                                </div>
+                                            </div>
+                                            <div class="list-group-item d-flex align-items-center">
+                                                <div class="me-3 text-primary">
+                                                    <i class="bi bi-tag-fill"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">Pricing Strategy</div>
+                                                    <small class="text-muted" id="pricingSuggestion">Current price point is optimal</small>
+                                                </div>
+                                            </div>
+                                            <div class="list-group-item d-flex align-items-center">
+                                                <div class="me-3 text-success">
+                                                    <i class="bi bi-graph-up-arrow"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">Sales Boost</div>
+                                                    <small class="text-muted" id="boostSuggestion">Potential to increase by 15% with promotions</small>
+                                                </div>
+                                            </div>
+                                            <div class="list-group-item d-flex align-items-center">
+                                                <div class="me-3 text-info">
+                                                    <i class="bi bi-calendar-week"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">Best Selling Period</div>
+                                                    <small class="text-muted">Next 30 days: <span class="fw-medium" id="bestPeriod">High Demand</span></small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-warning mt-3 mb-0" id="predictionInsights">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-info-circle-fill me-2"></i>
+                                                <div id="insightsText">Based on the provided information, this is the predicted sales value with high confidence.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#predictionForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalBtnText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Predicting...');
+                
+                // Get form data
+                const formData = {
+                    item_type: $('#item_type').val(),
+                    item_weight: parseFloat($('#item_weight').val()),
+                    item_fat_content: $('#item_fat_content').val(),
+                    item_visibility: parseFloat($('#item_visibility').val()),
+                    item_mrp: parseFloat($('#item_mrp').val()),
+                    outlet_identifier: parseInt($('#outlet_identifier').val()),
+                    outlet_establishment_year: parseInt($('#outlet_establishment_year').val()),
+                    outlet_size: $('#outlet_size').val(),
+                    outlet_location_type: $('#outlet_location_type').val(),
+                    outlet_type: $('#outlet_type').val()
+                };
+                
+                // Send prediction request
+                $.ajax({
+                    type: 'POST',
+                    url: '/predict',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            const prediction = parseFloat(response.prediction);
+                            
+                            // Format and display the prediction
+                            const formattedPrediction = prediction.toLocaleString('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            
+                            $('#predictionResult').text(formattedPrediction);
+                            
+                            // Calculate and display percentage difference from average (dummy data)
+                            const avgSales = 2000; // This would come from your model/data
+                            const percentageDiff = Math.round(((prediction - avgSales) / avgSales) * 100);
+                            const diffElement = $('#percentageDiff');
+                            const confidenceText = $('#confidenceText');
+                            
+                            if (percentageDiff > 0) {
+                                diffElement.text('+' + percentageDiff + '%');
+                                confidenceText.removeClass('text-danger').addClass('text-success');
+                                confidenceText.find('i').removeClass('bi-arrow-down').addClass('bi-arrow-up');
+                            } else {
+                                diffElement.text(percentageDiff + '%');
+                                confidenceText.removeClass('text-success').addClass('text-danger');
+                                confidenceText.find('i').removeClass('bi-arrow-up').addClass('bi-arrow-down');
+                            }
+                            
+                            // Update progress bar (0-100 scale)
+                            const progressPercent = Math.min(100, Math.max(0, (prediction / 8000) * 100));
+                            $('#salesProgress').css('width', progressPercent + '%').attr('aria-valuenow', progressPercent);
+                            
+                            // Update confidence badge
+                            const confidenceBadge = $('#confidenceBadge');
+                            if (Math.abs(percentageDiff) > 50) {
+                                confidenceBadge.removeClass('bg-warning bg-danger').addClass('bg-success').text('High Confidence');
+                            } else if (Math.abs(percentageDiff) > 20) {
+                                confidenceBadge.removeClass('bg-success bg-danger').addClass('bg-warning').text('Medium Confidence');
+                            } else {
+                                confidenceBadge.removeClass('bg-success bg-warning').addClass('bg-danger').text('Low Confidence');
+                            }
+                            
+                            // Update KPIs based on prediction
+                            if (prediction > 5000) {
+                                $('#mrpImpact').text('Very High').next('.progress').find('.progress-bar').css('width', '95%');
+                                $('#outletImpact').text('High').next('.progress').find('.progress-bar').css('width', '80%');
+                                $('#seasonality').text('Peak').next('.progress').find('.progress-bar').css('width', '90%');
+                                $('#marketTrend').text('Growing').next('.progress').find('.progress-bar').css('width', '70%');
+                                
+                                $('#inventorySuggestion').text('Increase stock levels to meet high demand');
+                                $('#pricingSuggestion').text('Consider premium pricing strategy');
+                                $('#boostSuggestion').text('Potential to increase by 25% with promotions');
+                                $('#bestPeriod').text('Peak Season');
+                                
+                                $('#insightsText').html('This product is predicted to have <strong>excellent sales</strong>. Consider increasing stock levels and capitalizing on the high demand period.');
+                            } else if (prediction > 2500) {
+                                $('#mrpImpact').text('High').next('.progress').find('.progress-bar').css('width', '75%');
+                                $('#outletImpact').text('Medium').next('.progress').find('.progress-bar').css('width', '60%');
+                                $('#seasonality').text('High').next('.progress').find('.progress-bar').css('width', '65%');
+                                $('#marketTrend').text('Stable').next('.progress').find('.progress-bar').css('width', '50%');
+                                
+                                $('#inventorySuggestion').text('Maintain current stock levels');
+                                $('#pricingSuggestion').text('Current price point is optimal');
+                                $('#boostSuggestion').text('Potential to increase by 15% with promotions');
+                                $('#bestPeriod').text('High Demand');
+                                
+                                $('#insightsText').html('Good sales prediction. This product should perform well in the selected outlet. Consider targeted promotions to maximize revenue.');
+                            } else if (prediction > 1000) {
+                                $('#mrpImpact').text('Medium').next('.progress').find('.progress-bar').css('width', '50%');
+                                $('#outletImpact').text('Medium').next('.progress').find('.progress-bar').css('width', '45%');
+                                $('#seasonality').text('Normal').next('.progress').find('.progress-bar').css('width', '40%');
+                                $('#marketTrend').text('Stable').next('.progress').find('.progress-bar').css('width', '40%');
+                                
+                                $('#inventorySuggestion').text('Monitor stock levels closely');
+                                $('#pricingSuggestion').text('Consider promotional pricing');
+                                $('#boostSuggestion').text('Potential to increase by 10% with marketing');
+                                $('#bestPeriod').text('Average Demand');
+                                
+                                $('#insightsText').html('Moderate sales prediction. Consider promotional activities and marketing campaigns to boost sales performance.');
+                            } else {
+                                $('#mrpImpact').text('Low').next('.progress').find('.progress-bar').css('width', '30%');
+                                $('#outletImpact').text('Low').next('.progress').find('.progress-bar').css('width', '25%');
+                                $('#seasonality').text('Low').next('.progress').find('.progress-bar').css('width', '20%');
+                                $('#marketTrend').text('Declining').next('.progress').find('.progress-bar').css('width', '15%');
+                                
+                                $('#inventorySuggestion').text('Reduce stock levels to avoid overstock');
+                                $('#pricingSuggestion').text('Review pricing strategy');
+                                $('#boostSuggestion').text('Consider bundle offers or discounts');
+                                $('#bestPeriod').text('Low Demand');
+                                
+                                $('#insightsText').html('Low sales prediction. You might want to review the product pricing, marketing strategy, or consider discontinuing the product if the trend continues.');
+                            }
+                            
+                            // Show the results with animation
+                            $('#resultBox').fadeIn('slow', function() {
+                                // Animate progress bars
+                                $('.progress-bar').each(function() {
+                                    const width = $(this).css('width');
+                                    $(this).css('width', '0').animate({
+                                        width: width
+                                    }, 1000);
+                                });
+                                
+                                // Scroll to results
+                                $('html, body').animate({
+                                    scrollTop: $('#resultBox').offset().top - 50
+                                }, 800);
+                            });
+                        } else {
+                            alert('Error: ' + (response.error || 'Failed to get prediction'));
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while processing your request.');
+                    },
+                    complete: function() {
+                        // Reset button state
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                });
+            });
+            
+            // Form validation
+            $('#predictionForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Basic client-side validation
+                let isValid = true;
+                $('.is-invalid').removeClass('is-invalid');
+                
+                // Validate item visibility (0-1)
+                const visibility = parseFloat($('#item_visibility').val());
+                if (isNaN(visibility) || visibility < 0 || visibility > 1) {
+                    $('#item_visibility').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validate MRP (positive number)
+                const mrp = parseFloat($('#item_mrp').val());
+                if (isNaN(mrp) || mrp <= 0) {
+                    $('#item_mrp').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    return false;
+                }
+                
+                // Show loading state
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalBtnText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Predicting...');
+                
+                // Prepare form data
+                const formData = {
+                    item_identifier: $('#item_identifier').val(),
+                    item_type: $('#item_type').val(),
+                    item_weight: $('#item_weight').val(),
+                    item_fat_content: $('#item_fat_content').val(),
+                    item_visibility: visibility,
+                    item_mrp: mrp,
+                    outlet_identifier: $('#outlet_identifier').val(),
+                    outlet_establishment_year: $('#outlet_establishment_year').val(),
+                    outlet_size: $('#outlet_size').val(),
+                    outlet_location_type: $('#outlet_location_type').val(),
+                    outlet_type: $('#outlet_type').val()
+                };
+                
+                // Make prediction request
+                $.ajax({
+                    url: '/predict',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            // Update UI with prediction
+                            const prediction = response.prediction;
+                            const formattedPrediction = response.formatted_prediction || `$${prediction.toFixed(2)}`;
+                            
+                            $('#predictionResult').text(formattedPrediction);
+                            $('#resultBox').fadeIn();
+                            
+                            // Scroll to results
+                            $('html, body').animate({
+                                scrollTop: $('#resultBox').offset().top - 100
+                            }, 500);
+                        } else {
+                            // Show error message
+                            let errorMsg = 'Error making prediction';
+                            if (response.details) {
+                                if (Array.isArray(response.details)) {
+                                    errorMsg = response.details.join('<br>');
+                                } else {
+                                    errorMsg = response.details;
+                                }
+                            } else if (response.error) {
+                                errorMsg = response.error;
+                            }
+                            
+                            alert('Error: ' + errorMsg);
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Error making prediction';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.error) {
+                                errorMsg = response.error;
+                            }
+                            if (response.details) {
+                                errorMsg += '\n' + response.details;
+                            }
+                        } catch (e) {
+                            errorMsg = xhr.statusText || 'Unknown error occurred';
+                        }
+                        alert('Error: ' + errorMsg);
+                    },
+                    complete: function() {
+                        // Reset button state
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                });
+            });
+            
+            // Set default values
+            const currentYear = new Date().getFullYear();
+            $('#outlet_establishment_year').val(currentYear - Math.floor(Math.random() * 20));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigMart Sales Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .prediction-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .feature-icon {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up me-2"></i>BigMart Sales
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold mb-3">BigMart Sales Prediction</h1>
+                    <p class="lead text-muted">Predict sales for your retail products with our advanced machine learning model</p>
+                </div>
+
+                <div class="prediction-card">
+                    <form id="predictionForm">
+                        <div class="row g-3">
+                            <!-- Item Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-4"><i class="bi bi-box-seam me-2"></i>Item Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="item_type" class="form-label">Item Type</label>
+                                    <select class="form-select" id="item_type" required>
+                                        {% for type in item_types %}
+                                            <option value="{{ type }}">{{ type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_weight" class="form-label">Item Weight (g)</label>
+                                    <input type="number" step="0.01" class="form-control" id="item_weight" required value="12.5">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_fat_content" class="form-label">Fat Content</label>
+                                    <select class="form-select" id="item_fat_content" required>
+                                        <option value="Low Fat">Low Fat</option>
+                                        <option value="Regular">Regular</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_visibility" class="form-label">Item Visibility (0-1)</label>
+                                    <input type="number" step="0.0001" min="0" max="1" class="form-control" id="item_visibility" required value="0.05">
+                                    <div class="form-text">The percentage of total display area of all products in a store allocated to this product</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="item_mrp" class="form-label">Maximum Retail Price (MRP)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="item_mrp" required value="100.00">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Outlet Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-4"><i class="bi bi-shop me-2"></i>Outlet Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="outlet_identifier" class="form-label">Outlet Identifier</label>
+                                    <input type="number" class="form-control" id="outlet_identifier" min="0" max="100" required value="10">
+                                    <div class="form-text">Numeric identifier for the outlet (0-100)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_establishment_year" class="form-label">Establishment Year</label>
+                                    <input type="number" class="form-control" id="outlet_establishment_year" min="1985" max="2023" required value="2010">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_size" class="form-label">Outlet Size</label>
+                                    <select class="form-select" id="outlet_size" required>
+                                        {% for size in outlet_sizes %}
+                                            <option value="{{ size }}">{{ size }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_location_type" class="form-label">Location Type</label>
+                                    <select class="form-select" id="outlet_location_type" required>
+                                        {% for location in location_types %}
+                                            <option value="{{ location }}">{{ location }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="outlet_type" class="form-label">Outlet Type</label>
+                                    <select class="form-select" id="outlet_type" required>
+                                        {% for type in outlet_types %}
+                                            <option value="{{ type }}">{{ type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-graph-up me-2"></i>Predict Sales
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div class="result-box mt-4" id="resultBox">
+                        <h4 class="mb-3">Prediction Result</h4>
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon me-3">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0" id="predictionResult">$0.00</h3>
+                                <p class="text-muted mb-0">Estimated Sales</p>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3" id="predictionInsights">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span id="insightsText">Based on the provided information, this is the predicted sales value.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>BigMart Sales Prediction</h5>
+                    <p class="text-muted">Predicting sales with machine learning for better retail decisions.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2023 BigMart. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#predictionForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalBtnText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Predicting...');
+                
+                // Get form data
+                const formData = {
+                    item_weight: parseFloat($('#item_weight').val()),
+                    item_fat_content: $('#item_fat_content').val(),
+                    item_visibility: parseFloat($('#item_visibility').val()),
+                    item_type: $('#item_type').val(),
+                    item_mrp: parseFloat($('#item_mrp').val()),
+                    outlet_identifier: parseInt($('#outlet_identifier').val()),
+                    outlet_establishment_year: parseInt($('#outlet_establishment_year').val()),
+                    outlet_size: $('#outlet_size').val(),
+                    outlet_location_type: $('#outlet_location_type').val(),
+                    outlet_type: $('#outlet_type').val()
+                };
+                
+                // Send prediction request
+                $.ajax({
+                    type: 'POST',
+                    url: '/predict',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            // Update result
+                            $('#predictionResult').text(response.formatted_prediction);
+                            
+                            // Show insights based on prediction
+                            const prediction = response.prediction;
+                            let insights = '';
+                            
+                            if (prediction > 5000) {
+                                insights = 'This product is predicted to have excellent sales. Consider increasing stock levels.';
+                            } else if (prediction > 2500) {
+                                insights = 'Good sales prediction. This product should perform well in the selected outlet.';
+                            } else if (prediction > 1000) {
+                                insights = 'Moderate sales prediction. Consider promotional activities to boost sales.';
+                            } else {
+                                insights = 'Low sales prediction. You might want to review the pricing or marketing strategy.';
+                            }
+                            
+                            $('#insightsText').text(insights);
+                            $('#resultBox').fadeIn();
+                            
+                            // Scroll to results
+                            $('html, body').animate({
+                                scrollTop: $('#resultBox').offset().top - 100
+                            }, 500);
+                        } else {
+                            alert('Error: ' + (response.error || 'Failed to get prediction'));
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while processing your request.');
+                    },
+                    complete: function() {
+                        // Reset button state
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                });
+            });
+            
+            // Set default values
+            const currentYear = new Date().getFullYear();
+            $('#outlet_establishment_year').val(currentYear - Math.floor(Math.random() * 20));
+        });
+    </script>
+</body>
+</html>
